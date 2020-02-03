@@ -1,0 +1,428 @@
+
+
+///
+<summary>
+///
+Classe d'environn
+ement pour le jeu Sudoku
+///
+</summary>
+public
+class
+SudokuTableAsArray
+{
+// On utilise une liste pour accéder plus facilement aux cellules,
+public
+List<
+int
+> CellsList =
+Enumerable.Repeat(0,81).ToList();
+///
+<summary>
+///
+La
+propriété Cells représente les cellules sous forme de tableau, et sera
+utilisée par Z3
+///
+</summary>
+public
+int
+[] Cells
+{
+get
+=> CellsList.ToArray();
+set
+=> CellsList =
+new
+List<
+int
+>(value);
+}
+///
+<summary>
+///
+La fonction ToString fournit une version lisible du Sudoku pour vérifier nos
+résultats
+///
+</summary>
+///
+<returns></returns>
+public
+override
+string
+ToString()
+{
+var
+lineSep =
+new
+string
+(
+'
+-
+'
+, 31);
+var
+blankSe
+p =
+new
+string
+(
+' '
+, 8);
+//var cells = GetType().GetProperties();
+var
+output =
+new
+StringBuilder();
+output.Append(lineSep);
+output.AppendLine();
+for
+(
+int
+row = 1; row <= 9; row++)
+{
+output
+.Append(
+"| "
+);
+for
+(
+int
+column = 1; column <= 9; column++)
+{
+// On retrouve l'index unique de la cellule à partir de sa ligne et sa
+colonne
+// Attention, les tableaux commencent à 0 en c#
+comme en Java
+var
+value = CellsList[(row
+-
+1) * 9 + (column
+-
+1)];
+output.Append(value);
+if
+(column % 3 == 0)
+{
+output.
+Append(
+" | "
+);
+}
+else
+{
+output.Append(
+" "
+);
+}
+}
+output.AppendLine();
+if
+(row % 3 == 0)
+{
+output.Append(lineSep);
+}
+else
+{
+o
+utput.Append(
+"| "
+);
+for
+(
+int
+i = 0; i < 3; i++)
+{
+output.Append(blankSep);
+output.Append(
+"| "
+);
+}
+}
+output.AppendLine();
+}
+return
+ou
+tput.ToString();
+}
+
+<summary>
+///
+Classe chargée d
+e créer une théorie du Sudoku en ajoutant les contraintes sous
+forme de Lambda Expressions LINQ interprétable par Z3
+///
+</summary>
+public
+static
+class
+SudokuTheoremAsArray
+{
+//private static readonly int[] Indices =
+Enumerable.Range(0,9).ToArr
+ay();
+///
+<summary>
+///
+Méthode en charge de créer le theoreme
+///
+</summary>
+
+{
+t.Cells[0 * 9 + c1],
+t.Cells[1 * 9 + c1],
+t.Cells[2 * 9 + c1],
+t.Cells[3 * 9 + c1],
+t.Cells[4 * 9 + c1],
+t.Cells[5 * 9 + c1],
+t.Cells[6 * 9 + c1],
+t.Cells[7 * 9 + c1],
+t.Cells[8 * 9 + c1],
+}
+)
+);
+// Forme idéale pour un provider IQueryabl
+e complet
+//sudokuTheorem = sudokuTheorem.Where(t => Z3Methods.Distinct(Indices.Select(i
+=> t.CellsArray[i * 9 + c1]).T
+oArray()));
+}
+// Les boites doivent avoir des chiffres distincts
+for
+(
+int
+b = 0; b < 9; b++)
+{
+//On évite les effets de bords par closure
+var
+b1 = b;
+// On retrouve la cellule qui démarre
+chacune des 9 boites
+// Utilisation de la division entière et de son reste
+var
+iStart = b1 / 3;
+var
+jStart = b1 % 3
+;
+var
+indexStart = iStart * 3 * 9 + jStart * 3;
+sudokuTheorem = sudokuTheorem.Where(t => Z3Methods.Distinct(
+new
+int
+[]
+{
+t.Cells[indexStart ],
+t.Cells[indexStart+1],
+t.Cells[indexStart+2],
+t.Cells[in
+dexStart+9],
+t.Cells[indexStart+10],
+t.Cells[indexStart+11],
+t.Cells[indexStart+18],
+t.Cells[indexStart+19],
+t.Cells[indexStart+20],
+}
+)
+);
+}
+return
+sudokuTheorem;
+}
+}
+
+var
+stopW
+atch =
+new
+Stopwatch();
+stopWatch.Start();
+TimeSpa
+n debutChrono;
+using
+(
+var
+ctx =
+new
+Z3Context())
+{
+// Création du théorème avec les contraintes
+var
+theorem =
+from
+t
+in
+SudokuTheoremAsArray.Create(ctx)
+// Ajout de contraintes pour les cellules données
+where
+t.Cells[9 * (
+-
+1 + 1) + 1
+-
+1] == 6
+&&
+t.Cells[9 * (
+-
+1 + 1) + 5
+-
+1] == 5
+&&
+t.Cells[9 * (
+-
+1 + 1) + 9
+-
+1] == 8
+where
+t.Cells[9 * (
+-
+1 + 2) + 2
+-
+1] == 2
+&&
+t.Cells[9 * (
+-
+1 + 2) + 6
+-
+1] == 3
+where
+t.Cells[9 * (
+-
+1 + 3) + 4
+-
+1] == 8
+&&
+t.Cells[9 * (
+-
+1 + 3) + 5
+-
+1] == 7
+&&
+t.Cells[9 * (
+-
+1 + 3) + 7
+-
+1] == 5
+where
+t.Cells[9 * (
+-
+1 + 4) + 2
+-
+1] == 6
+&&
+t.Cells[9 * (
+-
+1 + 4) + 7
+-
+1] == 8
+where
+t.Cells[9 * (
+-
+1 + 5) + 2
+-
+1] == 8
+&&
+t.Cells[9 * (
+-
+1 + 5) + 4
+-
+1
+] == 5
+&&
+t.Cells[9 * (
+-
+1 + 5) + 5
+-
+1] == 3
+&&
+t.Cells[9 * (
+-
+1 + 5) + 6
+-
+1] == 6
+&&
+t.Cells[9 * (
+-
+1
++ 5) + 8
+-
+1] == 9
+where
+t.Cells[9 * (
+-
+1 + 6) + 3
+-
+1] == 2
+&&
+t.Cells[9 * (
+-
+1 + 6) + 8
+-
+1] == 7
+where
+t.Cells[
+9 * (
+-
+1 + 7) + 3
+-
+1] == 1
+&&
+t.Cells[9 * (
+-
+1 + 7) + 5
+-
+1] == 4
+&&
+t.Cells[9 * (
+-
+1 + 7) + 6
+-
+1] == 2
+where
+t.Cells[9 * (
+-
+1 + 8) + 4
+-
+1] == 9
+&&
+t.Cells[9 * (
+-
+1 + 8) + 8
+-
+1] == 8
+where
+t.Cells[9 * (
+-
+1 + 9) + 1
+-
+1] == 3
+&&
+t.Cells[9 * (
+-
+1
++ 9) + 5
+-
+1] == 8
+&&
+t.Cells[9 * (
+-
+1 + 9) + 9
+-
+1] == 4
+select
+t;
+debutChrono = stopWatch.Elapsed;
+
+//Résolution du Sudoku
+var
+r
+esult = theorem.Solve();
+Console.WriteLine(
+$"Durée sudoku Difficile tableaux 2
+{stopWatch.Elapsed
+-
+debutChrono}
+"
+);
+// affichage du résultat
+Console.WriteLine(result);
+Console.ReadKey();
+}
